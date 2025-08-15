@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+from collections import defaultdict
 
 def investing_thisweek_scraper():
     url = 'https://www.investing.com/economic-calendar/'
@@ -28,12 +29,6 @@ def investing_thisweek_scraper():
         "limit_from": 0
     }
 
-    response = requests.get(url, headers=headers)
-
-    element = BeautifulSoup(response.content, "html.parser")
-    table = element.find("table", id="economicCalendarData")
-    tr = table.find_all("tr", class_="js-event-item")
-
     r = session.post("https://www.investing.com/economic-calendar/Service/getCalendarFilteredData", data=payload, headers=headers2)
 
     # new_tr = r.content.find_all("tr")
@@ -50,6 +45,8 @@ def investing_thisweek_scraper():
         if not cells:
             continue
 
+        datetime = row.get("data-event-datetime")
+        date_only = datetime.split(" ")[0] if datetime else None
         time = cells[0].get_text(strip=True)
         country = cells[1].get_text(strip=True)
         imp = 3
@@ -65,7 +62,8 @@ def investing_thisweek_scraper():
             "event": event,
             "actual": actual,
             "forecast": forecast,
-            "previous": previous
+            "previous": previous,
+            "date": date_only
         })
 
     return data
